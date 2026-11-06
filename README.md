@@ -75,9 +75,18 @@ story, measurements, lessons, and improvement plan.
 These commands describe my working Kaia.ai/ROS 2 environment, not a complete
 installation provided by this repository. Install the upstream bringup, teleop,
 Nav2, and `explore_lite` packages and source the ROS/workspace environment in
-each terminal. Start the physical bridge/agent once, for example with
-`ros2 launch kaiaai_bringup physical.launch.py lidar_model:=SLAMTEC-RPLIDAR-A1`,
-and verify fresh scans, odometry, and robot transforms before motion.
+each terminal.
+
+### Physical robot bringup
+
+Start the physical bridge/agent once:
+
+```bash
+ros2 launch kaiaai_bringup physical.launch.py lidar_model:=SLAMTEC-RPLIDAR-A1
+```
+
+Keep it running while using the commands below, and verify fresh scans,
+odometry, and robot transforms before motion.
 
 ### Manual movement
 

@@ -71,6 +71,7 @@ After configured physical bringup and fresh sensor/transform checks, I used:
 
 | Task | Command |
 |---|---|
+| Physical robot bringup (start once first) | `ros2 launch kaiaai_bringup physical.launch.py lidar_model:=SLAMTEC-RPLIDAR-A1` |
 | Manual movement | `ros2 run kaiaai_teleop teleop_keyboard` |
 | SLAM with navigation | `ros2 launch kaiaai_bringup navigation.launch.py slam:=True` |
 | Autonomous exploration | `ros2 launch explore_lite explore.launch.py` |
