@@ -123,14 +123,10 @@ repair host clock discontinuities or replace calibration.
 
 ## Mapping results
 
-<img src="docs/images/mapping-result.png" alt="Photograph of an indoor occupancy-grid mapping result on a monitor" width="620">
+<img width="420" height="457" alt="image" src="https://github.com/user-attachments/assets/c1fffb4d-05a5-43f9-94ab-88c0e792a12e" />
 
 *A mapping result from my project. I report stable mapping now; this image does
 not establish map accuracy, successful localization, or completed Nav2 missions.*
-
-*The exact software revision for this map photo is not established; it is
-not assigned to a specific project version. A second mapping photo was
-omitted from publication for privacy.*
 
 ## Hardware and power notes
 
