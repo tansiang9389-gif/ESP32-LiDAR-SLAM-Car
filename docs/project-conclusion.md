@@ -8,10 +8,13 @@ about measurement and integration as it was about getting software to run.
 I learned that a visible map is an important result, but it is not the same
 as dependable navigation.
 
-**My conclusion:** the system works as a driving, sensing, and experimental
-mapping prototype. My latest map is stable. ROS 2 navigation still needs
-tedious, careful commissioning, and I do not claim repeatable autonomous
-missions or a finished Nav2 robot.
+**My conclusion, updated 2026-11-06:** manual movement, sensing, SLAM, and
+autonomous exploration work well in my tests. My latest map is stable. Moving
+slowly resolved the yaw problem I observed in practical operation, and
+`explore_lite` successfully handled autonomous exploration through the Nav2
+stack. Setup still needs care, but the project has progressed beyond
+mapping-only experiments. I have not quantified route success rate or
+certified safe unattended operation.
 
 ## What I worked on
 
@@ -60,7 +63,23 @@ identify that boundary.
 | Standalone software regression | Exercised timing/order edge cases and 10,000 non-overlapping windows | Actual network delivery or Cartographer behavior |
 | Historical offline replay | Corrected data produced zero overlapping scan windows and no reversed odometry timestamps in the measured replay | That timing defects caused every historical large yaw jump |
 | Stationary live verification | Small measured yaw spans after the corrections and sensor recovery | Moving-yaw accuracy or successful navigation |
-| My latest reported outcome | Stable mapping | A quantified map error, route success rate, or Nav2 acceptance |
+| My latest reported outcome (2026-11-06) | Manual driving, stable SLAM, and autonomous exploration work well; slow movement resolved observed yaw problems in my runs | A quantified map/motion error, route success rate, or safe unattended operation |
+
+### My working command sequence
+
+After configured physical bringup and fresh sensor/transform checks, I used:
+
+| Task | Command |
+|---|---|
+| Manual movement | `ros2 run kaiaai_teleop teleop_keyboard` |
+| SLAM with navigation | `ros2 launch kaiaai_bringup navigation.launch.py slam:=True` |
+| Autonomous exploration | `ros2 launch explore_lite explore.launch.py` |
+
+I use keyboard teleop for manual movement, then stop it before autonomous
+exploration. The SLAM/Nav2 stack must already be ready before `explore_lite`
+sends frontier goals. These commands require the upstream installed
+environment, not just the bridge source in this repository.
+See the [operating workflow and prerequisites](../README.md#commands-that-worked-in-my-tests).
 
 ![Assembled LiDAR car](images/robot-build.png)
 
@@ -177,11 +196,17 @@ commands were issued during that check.
 These are bounded stationary measurements. They do not establish moving-yaw
 accuracy, localization quality, or navigation readiness.
 
-I suspect latency between the PC and ESP32 may contribute to the remaining
-yaw behavior. That is a hypothesis, not a measured root cause. Network jitter,
-clock discontinuities, wheel calibration, mounting, and motion-dependent
-effects need separate tests. I would not describe the outcome as a fundamental
-restriction of ESP32 or ROS 2.
+During the earlier investigation, I suspected latency between the PC and
+ESP32 might contribute to yaw behavior. That was a hypothesis, not a measured
+root cause. Network jitter, clock discontinuities, wheel calibration, mounting,
+and motion-dependent effects still warrant separate measurements. I would not
+describe the outcome as a fundamental restriction of ESP32 or ROS 2.
+
+**Latest practical result (2026-11-06):** moving slowly and turning gently
+resolved the visible yaw problem in my tests, allowing successful SLAM and
+autonomous exploration. This is the operating approach that worked for me.
+It does not establish an exact speed threshold, quantify moving-yaw accuracy,
+or prove that the previously measured host clock steps were repaired.
 
 ### LiDAR mounting and transforms
 
@@ -197,7 +222,7 @@ launch. These are historical configuration findings, not a corrected and
 validated mounting model shipped here. A real front/left/right obstacle check
 and measured mount are still required.
 
-## Why navigation remains tedious
+## What still needs care despite successful navigation
 
 SLAM (simultaneous localization and mapping) estimates a map and the robot's
 position. Nav2 must then use localization, transforms, costmaps, planners,
@@ -208,7 +233,9 @@ My experience was that bringing up the graph was easier than proving that
 every timestamp, wheel movement, and frame matched physical reality.
 Good-looking stationary mapping did not remove the need to calibrate moving
 odometry, validate mounting, control command ownership, and repeat route tests.
-I have not demonstrated a reliable route-success rate or unattended operation.
+My latest practical runs now demonstrate successful manual driving, SLAM, and
+autonomous exploration in my setup. They do not yet establish a measured
+route-success rate across repeated environments or safe unattended operation.
 
 ![Indoor mapping result](images/mapping-result.png)
 
@@ -241,9 +268,10 @@ because it contained a person's reflection.
 7. **Make bringup reproducible.** Preserve matched source, pinned dependencies,
    launch parameters, calibration, and environment records. A clean offline
    build should be separate from any physical deployment.
-8. **Commission Nav2 with acceptance tests.** Start with localization and
-   bounded low-speed routes, then repeat trials and report distance/yaw error,
-   route completion, recoveries, and stopping behavior.
+8. **Measure and repeat the successful navigation workflow.** Build on the
+   working low-speed SLAM and `explore_lite` runs with repeatable routes.
+   Report distance/yaw error, route completion, exploration coverage,
+   recoveries, and stopping behavior across different environments.
 
 ## What I chose to publish
 
@@ -266,14 +294,17 @@ limitation rather than publish a misleading "final" sketch. See the
 
 ## Final reflection
 
-I achieved a working robot integration and a stable mapping result, and I
-learned how easily timing, direction conventions, calibration, and runtime
-behavior can undermine navigation. I also learned to separate a successful
-software test, a stationary measurement, and a physical autonomy claim.
+I achieved a working robot integration, stable mapping, keyboard-controlled
+movement, and autonomous exploration. Moving slowly was the practical lesson
+that let me overcome the observed yaw problem in my latest runs. I also learned
+how timing, direction conventions, calibration, and runtime behavior can
+undermine navigation, and why software tests, stationary measurements, and
+physical operating results should be recorded separately.
 
-The next milestone is not another screenshot. It is repeatable, measured,
-safe navigation with matched source and configuration. That is the work still
-needed to turn this prototype into a dependable robot.
+The next milestone is to make this successful workflow repeatable and
+measurable, with matched source and configuration, tested stopping behavior,
+and results across more environments. The system works in my tests; those
+improvements would turn it into a more dependable and reproducible robot.
 
 [Back to the project overview](../README.md) |
 [Build and offline tests](../ros_ws/src/kaiaai_telemetry/README.md)
