@@ -1,29 +1,30 @@
-# SLAM LiDAR Car: From Hardware Experiments to ROS 2 Mapping
+# SLAM LiDAR Car: From Hardware Experiments to Mapping and Exploration
 
 I built a small differential-drive robot to learn how LiDAR, wheel encoders,
 embedded control, and PC-side robotics software work together. The project
 started with Arduino/ESP32 experiments and developed into a Kaia.ai-based ROS 2
-mapping prototype.
+mapping and autonomous-exploration prototype.
 
 <img src="docs/images/robot-build.png" alt="Assembled blue two-wheel robot with a raised RPLIDAR A1 and prototype wiring" width="520">
 
-**Current result:** driving, live LiDAR, and experimental mapping work. I now
-have a stable map, but reliable ROS 2 Nav2 navigation is unfinished. Navigation
-still needs careful, often tedious calibration, time alignment, startup checks,
-and repeated physical testing. This is an engineering learning project, not a
-turnkey autonomous robot.
+**Current result (2026-11-06):** manual driving, live LiDAR, SLAM, and autonomous
+exploration all work well in my tests. Moving slowly resolved the yaw problem
+I observed during those practical runs, and `explore_lite` successfully handled
+autonomous exploration. Calibration, time alignment, and startup checks still
+need care. These are my reported operating results, not a quantified
+route-success benchmark or a claim of safe unattended operation.
 
 ## What I achieved
 
 | Area | Result | Limit |
 |---|---|---|
 | Hardware integration | Assembled the car, LiDAR, motor driver, controller, and encoders | Wiring and controller revisions need separate verification |
-| Manual driving | Forward/backward and turning were exercised during development | Direction/channel mistakes and asymmetric reverse travel needed investigation |
+| Manual driving | Keyboard-controlled movement works well in my latest tests | Earlier direction/channel mistakes and asymmetric reverse travel are documented below |
 | LiDAR and ROS 2 | Streamed telemetry to the host and published scans, odometry, joints, and transforms | A running topic alone does not prove useful sensor data |
 | Mapping | Produced indoor maps; my latest result is stable mapping | Photos do not measure map accuracy or prove navigation |
-| Timing investigation | Corrected scan-duration handling and rejected non-increasing telemetry | Large moving-yaw jumps were not conclusively attributed or cured |
+| Timing and yaw | Corrected scan timing/order; slow movement resolved the observed yaw issue in my latest runs | Slow movement is an operating workaround, not proof that every underlying timing/calibration fault is fixed |
 | Regression testing | Added offline timing/order tests and a recorded-data replay tool | Stationary results are not moving-navigation acceptance tests |
-| Nav2 | Investigated the setup and integration | Repeatable, reliable autonomous navigation remains future work |
+| Nav2 and exploration | SLAM navigation and `explore_lite` autonomous exploration work well in my tests | Route success rate, motion accuracy, and unattended safety have not been quantified |
 
 ## How the used system fits together
 
@@ -42,7 +43,10 @@ Wheel encoders ----------> |                  |
                            |
                 Cartographer / RViz mapping
                            |
-                Nav2 commissioning (unfinished)
+                Nav2 planning / control
+                           ^
+                           |
+              explore_lite frontier goals
 ```
 
 The Arduino motor-control variant belongs to earlier experiments. It is **not**
@@ -65,6 +69,57 @@ ROS 2 does the host-side work; the ESP32 handles embedded sensing and drive.
 
 Read the [full project conclusion](docs/project-conclusion.md) for the debugging
 story, measurements, lessons, and improvement plan.
+
+## Commands that worked in my tests
+
+These commands describe my working Kaia.ai/ROS 2 environment, not a complete
+installation provided by this repository. Install the upstream bringup, teleop,
+Nav2, and `explore_lite` packages and source the ROS/workspace environment in
+each terminal.
+
+### Physical robot bringup
+
+Start the physical bridge/agent once:
+
+```bash
+ros2 launch kaiaai_bringup physical.launch.py lidar_model:=SLAMTEC-RPLIDAR-A1
+```
+
+Keep it running while using the commands below, and verify fresh scans,
+odometry, and robot transforms before motion.
+
+### Manual movement
+
+```bash
+ros2 run kaiaai_teleop teleop_keyboard
+```
+
+### SLAM
+
+```bash
+ros2 launch kaiaai_bringup navigation.launch.py slam:=True
+```
+
+This starts the configured navigation-with-SLAM workflow. Do not run another
+mapping launch or a saved-map navigation launch alongside it.
+
+### Autonomous exploration
+
+With the SLAM/Nav2 stack ready, stop keyboard teleop before starting:
+
+```bash
+ros2 launch explore_lite explore.launch.py
+```
+
+`explore_lite` selects unexplored frontiers and sends goals to Nav2; it does
+not replace the physical bringup, SLAM, or navigation stack. Use one command
+control path at a time, supervise the robot, and keep an independent physical
+motor cutoff available.
+
+**Yaw lesson:** move slowly and turn gently. This solved the visible yaw
+problem in my latest practical tests. No exact safe speed threshold or
+measured moving-yaw error is established here, and slow movement does not
+repair host clock discontinuities or replace calibration.
 
 ## Mapping results
 
@@ -125,9 +180,10 @@ The standalone regression needs only Python 3 and a C++17 compiler. The complete
 bridge needs ROS 2 Jazzy and the matching upstream `kaiaai_msgs` interfaces.
 This repository is **not** a complete robot bringup or flashing kit.
 
-Do not drive from these instructions. Physical commissioning must first prove
-an independent motor cutoff, exclusive command control, correct wheel
-directions, and safe command-timeout behavior.
+Before using the live commands above on a replica, physical commissioning must
+prove an independent motor cutoff, exclusive command control, correct wheel
+directions, and safe command-timeout behavior. My successful runs are not a
+substitute for checking another robot's hardware and configuration.
 
 ## Credits and project relationship
 
